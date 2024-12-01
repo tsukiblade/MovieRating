@@ -4,3 +4,21 @@
     build:
       context: .
       dockerfile: src/MovieRating.Api/Dockerfile
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://movierating.dashboard:18889
+    ports:
+      - 8081:8081
+      - 8080:8080
+    networks:
+      - movie
+      
+  movierating.dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.0
+    container_name: dashboard
+    ports:
+      - 18888:18888
+    networks:
+        - movie
+
+networks:
+  movie:
