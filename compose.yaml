@@ -1,0 +1,6 @@
+﻿services:
+  movierating.api:
+    image: movierating.api
+    build:
+      context: .
+      dockerfile: src/MovieRating.Api/Dockerfile
