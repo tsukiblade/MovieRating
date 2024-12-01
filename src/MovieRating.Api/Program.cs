@@ -1,3 +1,8 @@
+using Bogus;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MovieRating.Api.Database;
+using MovieRating.Api.Models;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -27,9 +32,11 @@ builder.Services.AddOpenTelemetry()
         tracing.AddOtlpExporter();
     });
 
-builder.Logging.AddOpenTelemetry(logging =>
+builder.Logging.AddOpenTelemetry(logging => { logging.AddOtlpExporter(); });
+
+builder.Services.AddDbContext<MovieRatingDbContext>(options =>
 {
-    logging.AddOtlpExporter();
+    options.UseNpgsql(builder.Configuration.GetConnectionString("MovieRating"));
 });
 
 var app = builder.Build();
@@ -42,34 +49,54 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", (ILogger<Program> logger) =>
+app.MapPost("/test-data", async ([FromServices] MovieRatingDbContext dbContext) =>
     {
-        logger.LogInformation("GetWeatherForecast called");
-     
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        
-        logger.LogInformation("GetWeatherForecast returned {@Forecast}", forecast);
-        
-        return forecast;
+        var testComments = new Faker<Comment>()
+            .StrictMode(true)
+            .RuleFor(c => c.Id, f => f.Random.Guid())
+            .RuleFor(c => c.Username, f => f.Internet.UserName())
+            .RuleFor(c => c.Title, f => f.Lorem.Sentence())
+            .RuleFor(c => c.Content, f => f.Rant.Review())
+            .RuleFor(c => c.Rating, f => f.Random.Number(1, 5));
+
+        var testMovies = new Faker<Movie>()
+            .StrictMode(true)
+            .RuleFor(m => m.Id, f => f.Random.Guid())
+            .RuleFor(m => m.Title, f => f.Lorem.Word())
+            .RuleFor(m => m.Description, f => f.Lorem.Sentences(3))
+            .RuleFor(m => m.Actors, f => f.Lorem.Words(4).ToList())
+            .RuleFor(m => m.Genre, f => f.Lorem.Word())
+            .RuleFor(m => m.Director, f => f.Name.FullName())
+            .RuleFor(m => m.Comments, f => testComments.Generate(f.Random.Number(1, 10)).ToList());
+
+        var movies = testMovies.Generate(1000);
+
+        await dbContext.Movies.AddRangeAsync(movies);
+
+        await dbContext.SaveChangesAsync();
+
+        return Results.Created("/movies", movies);
     })
-    .WithName("GetWeatherForecast")
+    .WithName("GenerateTestData")
     .WithOpenApi();
 
-await app.RunAsync();
+app.MapGet("/movies", async ([FromQuery] int? top, [FromServices] MovieRatingDbContext dbContext, [FromServices] ILogger<Program> logger, CancellationToken cancellationToken) =>
+    {
+        logger.LogInformation("GetMovies called");
+        
+        return await dbContext.Movies
+            .Include(m => m.Comments)
+            .AsNoTracking()
+            .Take(top ?? 100)
+            .ToListAsync(cancellationToken: cancellationToken);
+    })
+    .WithName("GetMovies")
+    .WithOpenApi();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+using (var scope = app.Services.CreateScope())
 {
-    public int TemperatureF => 32 + (int) (TemperatureC / 0.5556);
+    var db = scope.ServiceProvider.GetRequiredService<MovieRatingDbContext>();
+    await db.Database.MigrateAsync();
 }
+
+await app.RunAsync();

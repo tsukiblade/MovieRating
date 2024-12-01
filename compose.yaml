@@ -1,6 +1,24 @@
 ﻿services:
+  movierating.postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=movierating
+      - POSTGRES_PASSWORD=MyPass@word
+    ports:
+      - 5432:5432
+    networks:
+      - movie
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
   movierating.api:
     image: movierating.api
+    container_name: api
     build:
       context: .
       dockerfile: src/MovieRating.Api/Dockerfile
@@ -11,6 +29,9 @@
       - 8080:8080
     networks:
       - movie
+    depends_on:
+      movierating.postgres:
+        condition: service_healthy
       
   movierating.dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:8.0
