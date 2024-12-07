@@ -4,7 +4,7 @@ using MovieRating.Api.Models;
 
 namespace MovieRating.Api.Database.Configuration;
 
-public class MoveConfiguration : IEntityTypeConfiguration<Movie>
+public class MovieConfiguration : IEntityTypeConfiguration<Movie>
 {
     public void Configure(EntityTypeBuilder<Movie> builder)
     {
@@ -27,5 +27,7 @@ public class MoveConfiguration : IEntityTypeConfiguration<Movie>
 
         builder.HasMany(m => m.Comments)
             .WithOne();
+
+        builder.Ignore(m => m.Rating);
     }
 }

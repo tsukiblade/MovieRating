@@ -8,7 +8,7 @@ public class Movie
     
     public string Genre { get; set; }
     
-    public double Rating => Comments.Select(c => c.Rating).Average();
+    public double Rating => Comments.Select(c => c.Rating).DefaultIfEmpty(0).Average();
     
     public string? Description { get; set; }
     
