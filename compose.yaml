@@ -40,6 +40,29 @@
       - 18888:18888
     networks:
         - movie
-
+  
+  movierating.prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+        - ./prometheus:/etc/prometheus
+    networks:
+      - movie
+  
+  movierating.grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana/config:/etc/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - movie
+    depends_on:
+      - movierating.prometheus
+      
 networks:
   movie:

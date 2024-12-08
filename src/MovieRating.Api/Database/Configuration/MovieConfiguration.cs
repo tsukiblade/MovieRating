@@ -9,20 +9,20 @@ public class MovieConfiguration : IEntityTypeConfiguration<Movie>
     public void Configure(EntityTypeBuilder<Movie> builder)
     {
         builder.HasKey(m => m.Id);
-        
+
         builder.Property(m => m.Title)
-            .HasMaxLength(100)
+            .HasMaxLength(255)
             .IsRequired();
-        
+
         builder.Property(m => m.Genre)
-            .HasMaxLength(100)
+            .HasMaxLength(255)
             .IsRequired();
 
         builder.Property(m => m.Description);
-        
+
         builder.Property(m => m.Director)
-            .HasMaxLength(100);
-        
+            .HasMaxLength(255);
+
         builder.Property(m => m.Actors);
 
         builder.HasMany(m => m.Comments)

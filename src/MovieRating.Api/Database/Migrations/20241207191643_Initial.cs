@@ -17,10 +17,10 @@ namespace MovieRating.Api.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Genre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Genre = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    Director = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Director = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Actors = table.Column<List<string>>(type: "text[]", nullable: false)
                 },
                 constraints: table =>
@@ -33,8 +33,8 @@ namespace MovieRating.Api.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Username = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Title = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Username = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Content = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Rating = table.Column<int>(type: "integer", nullable: false),
                     MovieId = table.Column<Guid>(type: "uuid", nullable: true)

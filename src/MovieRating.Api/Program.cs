@@ -19,10 +19,16 @@ builder.Services.AddOpenTelemetry()
             .AddHttpClientInstrumentation()
             .AddRuntimeInstrumentation();
 
-        metrics.AddOtlpExporter();
+        metrics.AddOtlpExporter()
+            .AddPrometheusExporter();
     })
     .WithTracing(tracing =>
     {
+        if (builder.Environment.IsDevelopment())
+        {
+            tracing.SetSampler<AlwaysOnSampler>();
+        }
+        
         tracing.AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddEntityFrameworkCoreInstrumentation();
@@ -30,7 +36,13 @@ builder.Services.AddOpenTelemetry()
         tracing.AddOtlpExporter();
     });
 
-builder.Logging.AddOpenTelemetry(logging => { logging.AddOtlpExporter(); });
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeScopes = true;
+    logging.IncludeFormattedMessage = true;
+    
+    logging.AddOtlpExporter();
+});
 
 builder.Services.AddDbContext<MovieRatingDbContext>(options =>
 {
@@ -46,6 +58,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapPrometheusScrapingEndpoint();
 
 app.MapMovieEndpoints();
 app.MapTestDataEndpoints();

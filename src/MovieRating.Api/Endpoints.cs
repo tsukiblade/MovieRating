@@ -100,7 +100,7 @@ public static class Endpoints
 
     public static void MapTestDataEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/test-data", async ([FromServices] MovieRatingDbContext dbContext) =>
+        app.MapPost("/test-data", async (int? count, [FromServices] MovieRatingDbContext dbContext) =>
             {
                 var testComments = new Faker<Comment>()
                     .StrictMode(true)
@@ -120,7 +120,8 @@ public static class Endpoints
                     .RuleFor(m => m.Director, f => f.Name.FullName())
                     .RuleFor(m => m.Comments, f => testComments.Generate(f.Random.Number(1, 10)).ToList());
 
-                var movies = testMovies.Generate(1000);
+                count ??= 100;
+                var movies = testMovies.Generate(count.Value);
 
                 await dbContext.Movies.AddRangeAsync(movies);
 

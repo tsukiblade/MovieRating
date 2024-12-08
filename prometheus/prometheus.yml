@@ -1,0 +1,5 @@
+scrape_configs:
+  - job_name: "movierating-api"
+    scrape_interval: 1s
+    static_configs:
+      - targets: ["movierating.api:8080"]
